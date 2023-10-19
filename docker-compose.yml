@@ -1,0 +1,71 @@
+ version: "3"
+
+# Pravi container za bazu
+ services:
+   mariadb:
+     image: mariadb
+     container_name: mariaDb
+     networks:
+      - local
+
+# Prosledjuje port     
+     ports:
+       - 13306:3306
+
+# Promenljive za postavljanje root passworda i kreiranje wordpress baze podataka
+     environment:
+       MARIADB_ROOT_PASSWORD: password
+       MARIADB_DATABASE: wordpress
+# Attachovanje volumea
+     volumes:
+       - "./data:/var/lib/mysql"
+
+# Pravi phpmyadmin container     
+   phpmyadmin:
+     image: phpmyadmin
+     container_name: PMA
+     networks:
+      - local
+
+# Prosledjuje port     
+     ports:
+       - 8081:80
+
+# Postavlja promenljive za povezivanje baze i phpmyadmina
+     environment:
+        PMA_HOST: 172.17.0.1 # ip hosta
+        PMA_PORT: 13306 # port hosta
+        PMA_USER: root # user u bazi
+        PMA_PASSWORD: password # password user-a
+
+# Pravi wordpress iz latest image  
+# WP sifra rlHK52Mh%(8Alwf3r) username stefan.ristic
+   wordpress:
+
+# Mora prvo baza da se podigne pa nakon toga wordpress
+     depends_on:
+      - mariadb
+     image: wordpress
+     container_name: wordpress
+     networks:
+      - local
+
+# Napravio sam wp-config.php sa neophodnom konf za povezivanje
+# wordpress-a i baze i sad overwrite-ujem
+# default config u container-u
+# Attachovanje volumea     
+     volumes:
+      - "./wordpress-persistance:/var/www/html"
+      - type: bind
+        source: ./wordpress/wp-config.php
+        target: /var/www/html/wp-config.php
+
+# Proseledjuje se port
+     ports:
+       - 8080:80
+
+# Pravimo lokalni network
+
+ networks:
+  local:
+     name: local
